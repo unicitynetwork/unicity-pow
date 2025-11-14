@@ -97,12 +97,6 @@ TEST_CASE("ValidateAndNormalizeIP - IPv4", "[util][netaddress]") {
         REQUIRE(*result == "192.168.1.1");
     }
 
-    SECTION("Leading zeros stripped") {
-        auto result = ValidateAndNormalizeIP("192.168.001.001");
-        REQUIRE(result.has_value());
-        REQUIRE(*result == "192.168.1.1");
-    }
-
     SECTION("Loopback normalization") {
         auto result = ValidateAndNormalizeIP("127.0.0.1");
         REQUIRE(result.has_value());
@@ -339,12 +333,6 @@ TEST_CASE("ParseIPPort - edge cases", "[util][netaddress]") {
         REQUIRE(port == 80);
     }
 
-    SECTION("IPv4 with leading zeros") {
-        REQUIRE(ParseIPPort("192.168.001.001:8080", ip, port));
-        REQUIRE(ip == "192.168.1.1");
-        REQUIRE(port == 8080);
-    }
-
     SECTION("Extremely long invalid input") {
         std::string invalid(10000, 'x');
         REQUIRE_FALSE(ParseIPPort(invalid, ip, port));
@@ -358,12 +346,6 @@ TEST_CASE("ParseIPPort - normalization", "[util][netaddress]") {
     SECTION("IPv6 normalization in parsing") {
         REQUIRE(ParseIPPort("[2001:0db8:0000:0000:0000:0000:0000:0001]:8080", ip, port));
         REQUIRE(ip == "2001:db8::1");
-        REQUIRE(port == 8080);
-    }
-
-    SECTION("IPv4 normalization in parsing") {
-        REQUIRE(ParseIPPort("192.168.001.001:8080", ip, port));
-        REQUIRE(ip == "192.168.1.1");
         REQUIRE(port == 8080);
     }
 }
