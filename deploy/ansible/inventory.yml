@@ -1,0 +1,117 @@
+---
+# Ansible inventory for Unicity multi-network deployment
+# 6 nodes running regtest, testnet, and mainnet networks on same hardware
+
+all:
+  children:
+    # Regtest Network - Fast testing with 2-minute blocks
+    unicity_regtest:
+      hosts:
+        ct20:
+          ansible_host: 178.18.251.16
+          node_id: 0
+        ct21:
+          ansible_host: 185.225.233.49
+          node_id: 1
+        ct22:
+          ansible_host: 207.244.248.15
+          node_id: 2
+        ct23:
+          ansible_host: 194.140.197.98
+          node_id: 3
+        ct24:
+          ansible_host: 173.212.251.205
+          node_id: 4
+        ct25:
+          ansible_host: 144.126.138.46
+          node_id: 5
+      vars:
+        ansible_user: root
+        ansible_ssh_private_key_file: ~/.ssh/mykey
+        ansible_python_interpreter: /usr/bin/python3
+        unicity_network: regtest
+        unicity_version: latest
+        p2p_port: 29590
+        docker_data_dir: /var/lib/unicity/regtest
+        container_name: unicity-regtest
+
+    # Testnet Network - 10-minute blocks
+    unicity_testnet:
+      hosts:
+        ct20:
+          ansible_host: 178.18.251.16
+          node_id: 0
+          mining_address: "a000000000000000000000000000000000000001"
+        ct21:
+          ansible_host: 185.225.233.49
+          node_id: 1
+          mining_address: "a000000000000000000000000000000000000002"
+        ct22:
+          ansible_host: 207.244.248.15
+          node_id: 2
+          mining_address: "a000000000000000000000000000000000000003"
+        ct23:
+          ansible_host: 194.140.197.98
+          node_id: 3
+          mining_address: "a000000000000000000000000000000000000004"
+        ct24:
+          ansible_host: 173.212.251.205
+          node_id: 4
+          mining_address: "a000000000000000000000000000000000000005"
+        ct25:
+          ansible_host: 144.126.138.46
+          node_id: 5
+          mining_address: "a000000000000000000000000000000000000006"
+      vars:
+        ansible_user: root
+        ansible_ssh_private_key_file: ~/.ssh/mykey
+        ansible_python_interpreter: /usr/bin/python3
+        unicity_network: testnet
+        unicity_version: latest
+        p2p_port: 19590
+        docker_data_dir: /var/lib/unicity/testnet
+        container_name: unicity-testnet
+
+    # Mainnet Network - 1-hour blocks (production)
+    unicity_mainnet:
+      hosts:
+        ct20:
+          ansible_host: 178.18.251.16
+          node_id: 0
+          mining_address: "a000000000000000000000000000000000000001"
+        ct21:
+          ansible_host: 185.225.233.49
+          node_id: 1
+          mining_address: "a000000000000000000000000000000000000002"
+        ct22:
+          ansible_host: 207.244.248.15
+          node_id: 2
+          mining_address: "a000000000000000000000000000000000000003"
+        ct23:
+          ansible_host: 194.140.197.98
+          node_id: 3
+          mining_address: "a000000000000000000000000000000000000004"
+        ct24:
+          ansible_host: 173.212.251.205
+          node_id: 4
+          mining_address: "a000000000000000000000000000000000000005"
+        ct25:
+          ansible_host: 144.126.138.46
+          node_id: 5
+          mining_address: "a000000000000000000000000000000000000006"
+      vars:
+        ansible_user: root
+        ansible_ssh_private_key_file: ~/.ssh/mykey
+        ansible_python_interpreter: /usr/bin/python3
+        unicity_network: mainnet
+        unicity_version: latest
+        p2p_port: 9590
+        docker_data_dir: /var/lib/unicity/mainnet
+        container_name: unicity-mainnet
+
+    # Combined group for all nodes (useful for common operations)
+    unicity_nodes:
+      children:
+        unicity_regtest:
+        unicity_testnet:
+        unicity_mainnet:

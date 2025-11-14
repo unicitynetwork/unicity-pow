@@ -1,0 +1,86 @@
+{
+  "block_count": 6,
+  "blocks": [
+    {
+      "bits": 545259519,
+      "chainwork": "0000000000000000000000000000000000000000000000000000000000000004",
+      "hash": "6ebdcdb578195bb25aa503de4cb5851d6fa1fd11f1747b3d5026798c0b2ce54d",
+      "hash_randomx": "4e9d9b48ae8076c361b0567caf8d2efacc91f55f84c6f33f1ac4349ccddabcd2",
+      "height": 1,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 0,
+      "prev_hash": "0233b37bb6942bfb471cfd7fb95caab0e0f7b19cc8767da65fbef59eb49e45bd",
+      "status": 2,
+      "time": 1761246210,
+      "version": 1
+    },
+    {
+      "bits": 545259519,
+      "chainwork": "000000000000000000000000000000000000000000000000000000000000000a",
+      "hash": "940b6f4a9faffa7a007724ff5709ae3674f0f1a9708fea152d3ae424880f1d5a",
+      "hash_randomx": "243bfc232723ad51549dbcc18e60ffe34e527572750332cc86d9c7e9013979e1",
+      "height": 4,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 0,
+      "prev_hash": "7bcfcc07de678044a2a13c2b8c6da7350e61876e97514b2b43109026034d01a3",
+      "status": 2,
+      "time": 1761246212,
+      "version": 1
+    },
+    {
+      "bits": 545259519,
+      "chainwork": "0000000000000000000000000000000000000000000000000000000000000008",
+      "hash": "7bcfcc07de678044a2a13c2b8c6da7350e61876e97514b2b43109026034d01a3",
+      "hash_randomx": "21a424cda15c71805751d1de14595bee3cd8e7d9fcf32d575439f52c8976dc0c",
+      "height": 3,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 0,
+      "prev_hash": "dfaf498106e04da355afa8848a42f7a1f2ea4a9598c232b43dafc64926adc4e8",
+      "status": 2,
+      "time": 1761246211,
+      "version": 1
+    },
+    {
+      "bits": 545259519,
+      "chainwork": "000000000000000000000000000000000000000000000000000000000000000c",
+      "hash": "95a5448624a97d5eaf3bbce82ac79dc6a381c0b8cec24076f3afe5d7040cb6ab",
+      "hash_randomx": "f82456d00a6da6e39edbd4ccd0d1038fbff9a5a960cc42a0aa02770bd8e37e63",
+      "height": 5,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 1,
+      "prev_hash": "940b6f4a9faffa7a007724ff5709ae3674f0f1a9708fea152d3ae424880f1d5a",
+      "status": 2,
+      "time": 1761246212,
+      "version": 1
+    },
+    {
+      "bits": 545259519,
+      "chainwork": "0000000000000000000000000000000000000000000000000000000000000002",
+      "hash": "0233b37bb6942bfb471cfd7fb95caab0e0f7b19cc8767da65fbef59eb49e45bd",
+      "hash_randomx": "0000000000000000000000000000000000000000000000000000000000000000",
+      "height": 0,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 2,
+      "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+      "status": 2,
+      "time": 1296688602,
+      "version": 1
+    },
+    {
+      "bits": 545259519,
+      "chainwork": "0000000000000000000000000000000000000000000000000000000000000006",
+      "hash": "dfaf498106e04da355afa8848a42f7a1f2ea4a9598c232b43dafc64926adc4e8",
+      "hash_randomx": "b693af1c1f5b67c6cc9b1f5475aca7dbd92a7bc1d764de7e40657dd68c57b951",
+      "height": 2,
+      "miner_address": "0000000000000000000000000000000000000000",
+      "nonce": 1,
+      "prev_hash": "6ebdcdb578195bb25aa503de4cb5851d6fa1fd11f1747b3d5026798c0b2ce54d",
+      "status": 2,
+      "time": 1761246211,
+      "version": 1
+    }
+  ],
+  "genesis_hash": "0233b37bb6942bfb471cfd7fb95caab0e0f7b19cc8767da65fbef59eb49e45bd",
+  "tip_hash": "95a5448624a97d5eaf3bbce82ac79dc6a381c0b8cec24076f3afe5d7040cb6ab",
+  "version": 1
+}

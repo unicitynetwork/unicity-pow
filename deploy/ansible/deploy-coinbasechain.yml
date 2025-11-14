@@ -1,0 +1,234 @@
+---
+# Ansible Playbook: Deploy Unicity Docker Network
+# Deploys 6-node regtest network for P2P sync testing
+
+- name: Deploy Unicity Docker Network
+  hosts: unicity_nodes
+  become: true
+
+  vars:
+    docker_image_name: "unicity:{{ unicity_version }}"
+    container_name: "unicity-{{ unicity_network }}"
+
+  tasks:
+    # =========================================================================
+    # 1. Install Docker
+    # =========================================================================
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      ignore_errors: yes
+      changed_when: false
+      tags: [install]
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: docker_check.rc != 0
+      tags: [install]
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: present
+      when: docker_check.rc != 0
+      tags: [install]
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: docker_check.rc != 0
+      tags: [install]
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+      when: docker_check.rc != 0
+      tags: [install]
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+        update_cache: yes
+      when: docker_check.rc != 0
+      tags: [install]
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+      tags: [install]
+
+    # =========================================================================
+    # 2. Build/Transfer Docker Image
+    # =========================================================================
+    - name: Remove duplicate Docker repository file (if exists)
+      file:
+        path: /etc/apt/sources.list.d/download_docker_com_linux_ubuntu.list
+        state: absent
+      tags: [build]
+
+    - name: Update apt cache after cleanup
+      apt:
+        update_cache: yes
+      tags: [build]
+
+    - name: Install Python Docker dependencies
+      apt:
+        name:
+          - python3-requests
+          - python3-docker
+        state: present
+      tags: [build]
+
+    - name: Create temporary build directory
+      file:
+        path: /tmp/unicity-build
+        state: directory
+        mode: '0755'
+      tags: [build]
+
+    - name: Copy project files to server
+      synchronize:
+        src: "{{ playbook_dir }}/../../"
+        dest: /tmp/unicity-build/
+        delete: yes
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=build"
+          - "--exclude=build_*"
+          - "--exclude=.vscode"
+          - "--exclude=*.o"
+          - "--exclude=*.a"
+          - "--exclude=deploy/ansible"
+      tags: [build]
+
+    - name: Build Docker image on remote server
+      docker_image:
+        name: "{{ docker_image_name }}"
+        source: build
+        build:
+          path: /tmp/unicity-build
+          dockerfile: Dockerfile
+          pull: yes
+        state: present
+        force_source: yes
+      tags: [build]
+
+    - name: Clean up build directory
+      file:
+        path: /tmp/unicity-build
+        state: absent
+      tags: [build]
+
+    # =========================================================================
+    # 3. Configure Node
+    # =========================================================================
+    - name: Create data directory
+      file:
+        path: "{{ docker_data_dir }}"
+        state: directory
+        mode: '0755'
+      tags: [config]
+
+    - name: Stop existing container (if any)
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+      tags: [config, deploy]
+
+    # =========================================================================
+    # 4. Deploy Container
+    # =========================================================================
+    - name: Start Unicity container
+      docker_container:
+        name: "{{ container_name }}"
+        image: "{{ docker_image_name }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "{{ p2p_port }}:{{ p2p_port }}"
+        volumes:
+          - "{{ docker_data_dir }}:/home/unicity/.unicity"
+        env:
+          UNICITY_NETWORK: "{{ unicity_network }}"
+          UNICITY_MAXCONNECTIONS: "10"
+        command: []
+      tags: [deploy]
+
+    - name: Wait for container to be healthy
+      wait_for:
+        host: "{{ ansible_host }}"
+        port: "{{ p2p_port }}"
+        delay: 5
+        timeout: 30
+      tags: [deploy]
+
+    # =========================================================================
+    # 5. Display node info
+    # =========================================================================
+    - name: Get container status
+      command: docker ps -f name={{ container_name }} --format "table {{{{.Names}}}}\t{{{{.Status}}}}\t{{{{.Ports}}}}"
+      register: container_status
+      tags: [info]
+
+    - name: Display container status
+      debug:
+        msg: "{{ container_status.stdout_lines }}"
+      tags: [info]
+
+# ============================================================================
+# Post-deployment: Configure P2P connections
+# ============================================================================
+- name: Configure P2P Network
+  hosts: unicity_nodes
+  become: true
+  serial: 1
+
+  vars:
+    container_name: "unicity-{{ unicity_network }}"
+
+  tasks:
+    - name: Build addnode commands for all other nodes
+      set_fact:
+        peer_nodes: "{{ groups['unicity_nodes'] | reject('equalto', inventory_hostname) | list }}"
+      tags: [connect]
+
+    - name: Connect to peer nodes
+      shell: |
+        docker exec {{ container_name }} unicity-cli \
+          -regtest addnode {{ hostvars[item].ansible_host }}:{{ hostvars[item].p2p_port }} onetry
+      loop: "{{ peer_nodes }}"
+      ignore_errors: yes
+      tags: [connect]
+
+    - name: Wait for connections to establish
+      pause:
+        seconds: 5
+      tags: [connect]
+
+    - name: Get peer info
+      shell: |
+        docker exec {{ container_name }} unicity-cli -regtest getpeerinfo | head -20
+      register: peer_info
+      ignore_errors: yes
+      tags: [connect, info]
+
+    - name: Display peer connections
+      debug:
+        msg: "{{ inventory_hostname }}: {{ peer_info.stdout_lines }}"
+      when: peer_info.stdout_lines is defined
+      tags: [connect, info]

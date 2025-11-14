@@ -1,0 +1,45 @@
+---
+# Ansible Playbook: Mine blocks on Unicity nodes
+# Usage: ansible-playbook -i inventory.yml mine-blocks.yml -e "blocks=10"
+#
+# Mining addresses are configured per-node in inventory.yml
+# Each node will mine to its own unique address for reward distribution
+
+- name: Mine blocks on Unicity nodes
+  hosts: unicity_nodes
+  become: true
+
+  vars:
+    container_name: "unicity-{{ unicity_network }}"
+    blocks: 1  # Default to 1 block, can be overridden with -e blocks=N
+
+  tasks:
+    - name: Mine {{ blocks }} block(s) on {{ inventory_hostname }} to address {{ mining_address }}
+      shell: |
+        docker exec {{ container_name }} unicity-cli generate {{ blocks }} {{ mining_address }}
+      register: mine_result
+      tags: [mine]
+      when: mining_address is defined
+
+    - name: Mine {{ blocks }} block(s) on {{ inventory_hostname }} (no address specified)
+      shell: |
+        docker exec {{ container_name }} unicity-cli generate {{ blocks }}
+      register: mine_result_noaddr
+      tags: [mine]
+      when: mining_address is not defined
+
+    - name: Display mining result
+      debug:
+        msg: "{{ inventory_hostname }}: Mined {{ blocks }} blocks - {{ mine_result.stdout_lines | default(mine_result_noaddr.stdout_lines) }}"
+      tags: [mine]
+
+    - name: Get blockchain info
+      shell: |
+        docker exec {{ container_name }} unicity-cli getblockchaininfo
+      register: blockchain_info
+      tags: [info]
+
+    - name: Display blockchain height
+      debug:
+        msg: "{{ inventory_hostname }}: {{ blockchain_info.stdout_lines }}"
+      tags: [info]

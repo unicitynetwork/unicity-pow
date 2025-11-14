@@ -1,0 +1,47 @@
+---
+# Ansible Playbook: Clean up Unicity deployment
+# Stops containers, removes images, and optionally deletes data
+
+- name: Clean up Unicity Docker deployment
+  hosts: unicity_nodes
+  become: true
+
+  vars:
+    container_name: "unicity-{{ unicity_network }}"
+    docker_image_name: "unicity:{{ unicity_version }}"
+    remove_data: false  # Set to true to delete blockchain data
+
+  tasks:
+    - name: Stop Unicity container
+      docker_container:
+        name: "{{ container_name }}"
+        state: absent
+      tags: [cleanup]
+
+    - name: Remove Docker image
+      docker_image:
+        name: "{{ docker_image_name }}"
+        state: absent
+        force_absent: yes
+      tags: [cleanup, image]
+
+    - name: Remove blockchain data (if requested)
+      file:
+        path: "{{ docker_data_dir }}"
+        state: absent
+      when: remove_data | bool
+      tags: [cleanup, data]
+
+    - name: Prune Docker system
+      docker_prune:
+        containers: yes
+        images: yes
+        networks: yes
+        volumes: yes
+        builder_cache: yes
+      tags: [cleanup, prune]
+
+    - name: Display cleanup status
+      debug:
+        msg: "Cleanup completed on {{ inventory_hostname }}"
+      tags: [cleanup]

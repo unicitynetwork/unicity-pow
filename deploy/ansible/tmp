@@ -1,0 +1,60 @@
+fix: code deduplication and GETADDR memory exhaustion vulnerability
+
+## Code Deduplication
+
+### Atomic File Write Pattern
+Centralized duplicate atomic file write code (~150 lines) from ban_manager,
+anchor_manager, and addr_manager into util::atomic_write_file().
+
+Added permission parameter support to allow owner-only files (0600) for
+sensitive network data while maintaining default 0644 for general use.
+
+Improvements over original implementations:
+- Added directory sync for better crash safety (ensures rename is durable)
+- Proper partial write handling in loop
+- Consistent error handling across all persistence operations
+
+Files refactored:
+- ban_manager.cpp: 73 lines → 28 lines
+- anchor_manager.cpp: 65 lines → 13 lines
+- addr_manager.cpp: 68 lines → 14 lines
+
+### IP Address Conversion
+Eliminated duplicate NetworkAddress string conversion code (~88 lines)
+across 4 locations by using centralized functions:
+- NetworkAddress::from_string() for string → NetworkAddress conversion
+- util::ValidateAndNormalizeIP() for IPv4-mapped normalization
+
+This ensures consistent IPv4-mapped IPv6 handling (security: prevents
+ban evasion via ::ffff: prefixes) and reduces code maintenance burden.
+
+## Security Fix: GETADDR Memory Exhaustion (DoS)
+
+### Vulnerability
+GetAllLearnedAddresses() copied ALL learned address maps from ALL peers
+into memory, enabling a memory exhaustion attack:
+
+Attack: 125 peers × 2000 addresses/peer × 68 bytes = 17 MB per GETADDR
+Simultaneous GETADDR from 125 peers = 2.1 GB memory spike
+
+### Fix
+Added memory-efficient GetLearnedAddressesForGetAddr() API:
+- Early termination when limit reached (O(max_count) memory)
+- Returns only TimestampedAddress (34 bytes) not full LearnedEntry (68 bytes)
+- Automatically excludes requester's addresses
+- Deterministic peer ordering for reproducible behavior
+
+Impact: 2.1 GB → 34 KB (99.998% reduction in attack scenario)
+
+Marked GetAllLearnedAddresses() as deprecated for future removal.
+
+## Statistics
+- Lines removed: ~362
+- Lines added: ~483
+- Duplicate code eliminated: ~238 lines
+- Files modified: 16
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>
+

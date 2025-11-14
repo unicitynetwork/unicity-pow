@@ -1,0 +1,44 @@
+---
+# Ansible Playbook: Start mining on Unicity nodes
+#
+# Usage:
+#   ansible-playbook -i inventory.yml start-mining.yml --limit unicity_testnet
+#   ansible-playbook -i inventory.yml start-mining.yml --limit unicity_mainnet
+#   ansible-playbook -i inventory.yml start-mining.yml --limit unicity_regtest
+#
+# Mining addresses are configured per-node in inventory.yml
+# Each node will mine to its own unique address for reward distribution
+
+- name: Start mining on Unicity nodes
+  hosts: all
+  become: true
+
+  tasks:
+    # Use unicity_network and container_name variables from inventory group_vars
+    # These are set correctly per-group, unlike group_names which contains all groups
+    - name: Start mining on {{ inventory_hostname }} ({{ unicity_network }}) with address {{ mining_address }}
+      shell: |
+        docker exec {{ container_name }} unicity-cli startmining {{ mining_address }}
+      register: mining_result
+      ignore_errors: yes
+      when: mining_address is defined
+
+    - name: Start mining on {{ inventory_hostname }} ({{ unicity_network }}) (no address specified)
+      shell: |
+        docker exec {{ container_name }} unicity-cli startmining
+      register: mining_result_noaddr
+      ignore_errors: yes
+      when: mining_address is not defined
+
+    - name: Display mining result
+      debug:
+        msg: "{{ inventory_hostname }} ({{ unicity_network }}): {{ mining_result.stdout | default(mining_result_noaddr.stdout) }}"
+
+    - name: Get mining info from {{ unicity_network }}
+      shell: |
+        docker exec {{ container_name }} unicity-cli getmininginfo
+      register: mining_info
+
+    - name: Display mining info
+      debug:
+        var: mining_info.stdout_lines

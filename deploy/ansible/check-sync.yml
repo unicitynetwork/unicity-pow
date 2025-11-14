@@ -1,0 +1,74 @@
+---
+# Ansible Playbook: Check sync status across all nodes
+# Displays blockchain height, peer count, and sync status
+
+- name: Check Unicity network sync status
+  hosts: unicity_nodes
+  become: true
+
+  vars:
+    container_name: "unicity-{{ unicity_network }}"
+
+  tasks:
+    - name: Get blockchain info
+      shell: |
+        docker exec {{ container_name }} unicity-cli getblockchaininfo
+      register: blockchain_info
+      ignore_errors: yes
+      tags: [info]
+
+    - name: Get peer count
+      shell: |
+        docker exec {{ container_name }} unicity-cli getconnectioncount
+      register: peer_count
+      ignore_errors: yes
+      tags: [info]
+
+    - name: Parse blockchain height
+      set_fact:
+        block_height: "{{ blockchain_info.stdout | regex_search('\"blocks\":\\s*(\\d+)', '\\1') | first | default('unknown') }}"
+      when: blockchain_info.rc == 0
+      tags: [info]
+
+    - name: Display sync status
+      debug:
+        msg: |
+          ========================================
+          Node: {{ inventory_hostname }} ({{ ansible_host }})
+          ========================================
+          Block Height: {{ block_height | default('unknown') }}
+          Peer Count: {{ peer_count.stdout | default('unknown') }}
+          Container Status: {{ 'Running' if blockchain_info.rc == 0 else 'Not Running' }}
+          ========================================
+      tags: [info]
+
+# ============================================================================
+# Summary Report
+# ============================================================================
+- name: Generate sync summary
+  hosts: localhost
+  gather_facts: no
+
+  tasks:
+    - name: Collect all block heights
+      set_fact:
+        all_heights: "{{ groups['unicity_nodes'] | map('extract', hostvars, ['block_height']) | list }}"
+      tags: [summary]
+
+    - name: Check if all nodes are in sync
+      set_fact:
+        nodes_in_sync: "{{ all_heights | unique | length == 1 }}"
+      when: all_heights is defined
+      tags: [summary]
+
+    - name: Display sync summary
+      debug:
+        msg: |
+          ========================================
+          NETWORK SYNC SUMMARY
+          ========================================
+          Total Nodes: {{ groups['unicity_nodes'] | length }}
+          Unique Heights: {{ all_heights | unique | list if all_heights is defined else 'N/A' }}
+          Nodes In Sync: {{ 'YES' if nodes_in_sync | default(false) else 'NO' }}
+          ========================================
+      tags: [summary]
