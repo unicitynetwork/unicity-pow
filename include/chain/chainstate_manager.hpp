@@ -114,6 +114,17 @@ public:
   void TestSetSkipPoWChecks(bool enabled);
   bool TestGetSkipPoWChecks() const;
 
+  // === Test/Diagnostic Methods ===
+  // These methods are intentionally public but should only be used in tests
+  inline size_t DebugCandidateCount() const {
+    std::lock_guard<std::recursive_mutex> lock(validation_mutex_);
+    return chain_selector_.GetCandidateCount();
+  }
+  inline std::vector<uint256> DebugCandidateHashes() const {
+    std::lock_guard<std::recursive_mutex> lock(validation_mutex_);
+    return chain_selector_.DebugCandidateHashes();
+  }
+
 protected:
   // Virtual methods for test mocking
   virtual bool CheckProofOfWork(const CBlockHeader &header,
@@ -152,20 +163,6 @@ private:
   bool ConnectTip(chain::CBlockIndex *pindexNew,
                   std::vector<PendingNotification> &events);
   bool DisconnectTip(std::vector<PendingNotification> &events);
-
-
-#ifdef UNICITY_TESTS
-public:
-  // TEST-ONLY: expose candidate info for assertions in unit tests
-  inline size_t DebugCandidateCount() const {
-    std::lock_guard<std::recursive_mutex> lock(validation_mutex_);
-    return chain_selector_.GetCandidateCount();
-  }
-  inline std::vector<uint256> DebugCandidateHashes() const {
-    std::lock_guard<std::recursive_mutex> lock(validation_mutex_);
-    return chain_selector_.DebugCandidateHashes();
-  }
-#endif
 
   // Process orphan headers waiting for parent (recursive)
   // Assumes validation_mutex_ held by caller

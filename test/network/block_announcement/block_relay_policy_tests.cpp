@@ -147,35 +147,40 @@ TEST_CASE("BlockRelay policy: Flush chunking boundaries 0, =MAX, 2xMAX; multi-pe
     auto& pm = a.GetNetworkManager().peer_manager();
     auto peers = pm.get_all_peers(); REQUIRE(peers.size() == 2);
 
+    // Override chunk size for testing (default is 50000, we use 1000 for performance)
+    a.SetBlockRelayChunkSize(1000);
+
     // Case 0: empty queue -> no INV
     a.GetNetworkManager().flush_block_announcements(); AdvanceSeconds(net, 1);
     CHECK(net.CountCommandSent(a.GetId(), b.GetId(), protocol::commands::INV) == 0);
 
-    // Fill exactly MAX_INV_SIZE (use 1000 instead of 50000 for faster testing - chunking logic is the same)
-    const size_t MAXN = 1000;  // Reduced from protocol::MAX_INV_SIZE (50000) for test performance
-    std::vector<uint256> batch_max; batch_max.reserve(MAXN);
+    // Test chunking boundaries: 0, =MAX (1000), 2xMAX (2000)
+    const size_t CHUNK_SIZE = 1000;
+    const size_t TEST_SIZE_1 = CHUNK_SIZE;      // Exactly MAX -> 1 chunk
+    const size_t TEST_SIZE_2 = 2 * CHUNK_SIZE;  // 2×MAX -> 2 chunks
+    std::vector<uint256> batch_1; batch_1.reserve(TEST_SIZE_1);
     std::mt19937_64 rng(123);
-    for (size_t i=0;i<MAXN;++i){ uint256 h{}; for (int j=0;j<4;++j){ uint64_t w=rng(); std::memcpy(h.data()+j*8,&w,8);} batch_max.push_back(h);}    
+    for (size_t i=0;i<TEST_SIZE_1;++i){ uint256 h{}; for (int j=0;j<4;++j){ uint64_t w=rng(); std::memcpy(h.data()+j*8,&w,8);} batch_1.push_back(h);}
 
     // Push into b's queue only
-    for (auto& h : batch_max) {
+    for (auto& h : batch_1) {
         pm.AddBlockForInvRelay(peers[0]->id(), h);
     }
     a.GetNetworkManager().flush_block_announcements(); AdvanceSeconds(net, 1);
 
-    // Expect exactly 1 INV to b of size MAX_INV_SIZE
+    // Expect exactly 1 INV to b
     auto payloads_b = net.GetCommandPayloads(a.GetId(), b.GetId(), protocol::commands::INV);
     size_t inv_count_b = 0; size_t last_size_b = 0;
     for (const auto& p : payloads_b){ message::InvMessage inv; if (inv.deserialize(p.data(), p.size())){ inv_count_b++; last_size_b = inv.inventory.size(); } }
     CHECK(inv_count_b >= 1);
-    CHECK(last_size_b == MAXN);
+    CHECK(last_size_b == TEST_SIZE_1);
 
-    // 2xMAX -> two chunks per peer
-    std::vector<uint256> batch_2x; batch_2x.reserve(2*MAXN);
-    for (size_t i=0;i<2*MAXN;++i){ uint256 h{}; for (int j=0;j<4;++j){ uint64_t w=rng(); std::memcpy(h.data()+j*8,&w,8);} batch_2x.push_back(h);}    
+    // TEST_SIZE_2 > MAX_INV_SIZE -> two chunks per peer (tests chunking logic)
+    std::vector<uint256> batch_2; batch_2.reserve(TEST_SIZE_2);
+    for (size_t i=0;i<TEST_SIZE_2;++i){ uint256 h{}; for (int j=0;j<4;++j){ uint64_t w=rng(); std::memcpy(h.data()+j*8,&w,8);} batch_2.push_back(h);}
     // Push to both peers
     for (auto& p : peers) {
-        for (auto& h : batch_2x) {
+        for (auto& h : batch_2) {
             pm.AddBlockForInvRelay(p->id(), h);
         }
     }

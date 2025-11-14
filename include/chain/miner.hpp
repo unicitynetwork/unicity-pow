@@ -70,19 +70,17 @@ public:
   // Thread-safe: uses atomic flag checked by mining thread
   void InvalidateTemplate() { template_invalidated_.store(true); }
 
+  // === Test/Diagnostic Methods ===
+  // These methods are intentionally public but should only be used in tests
+
+  // Test-only: expose selected internals for deterministic unit testing
+  bool DebugShouldRegenerateTemplate(const uint256& prev_hash) { return ShouldRegenerateTemplate(prev_hash); }
+  BlockTemplate DebugCreateBlockTemplate() { return CreateBlockTemplate(); }
+
 private:
   void MiningWorker();
   BlockTemplate CreateBlockTemplate();
   bool ShouldRegenerateTemplate(const uint256& prev_hash); // e.g., chain tip changed
-
-#ifdef UNICITY_TESTS
-public:
-  // TEST-ONLY: expose selected internals for deterministic unit testing
-  bool DebugShouldRegenerateTemplate(const uint256& prev_hash) { return ShouldRegenerateTemplate(prev_hash); }
-  BlockTemplate DebugCreateBlockTemplate() { return CreateBlockTemplate(); }
-#endif
-
-private:
   // Chain params
   const chain::ChainParams &params_;
   validation::ChainstateManager &chainstate_;

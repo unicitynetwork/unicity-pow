@@ -5,11 +5,9 @@
 
 #include "chain/block_index.hpp"
 #include "chain/block_manager.hpp"
-#include <set>
-#ifdef UNICITY_TESTS
 #include "util/uint.hpp"
+#include <set>
 #include <vector>
-#endif
 
 namespace unicity {
 namespace validation {
@@ -81,16 +79,10 @@ public:
   // Remove block from candidate set (caller must hold validation_mutex_)
   void RemoveCandidate(chain::CBlockIndex *pindex);
 
-private:
-  // Set of blocks that could be chain tips (sorted by descending chain work)
-  std::set<chain::CBlockIndex *, CBlockIndexWorkComparator> m_candidates;
+  // === Test/Diagnostic Methods ===
+  // These methods are intentionally public but should only be used in tests
 
-  // Best header we've seen (most chainwork, may not be on active chain)
-  chain::CBlockIndex *m_best_header{nullptr};
-
-#ifdef UNICITY_TESTS
-public:
-  // TEST-ONLY: debug accessors for candidate set; compiled only in tests
+  // Test-only: debug accessors for candidate set
   size_t DebugCandidateCount() const { return m_candidates.size(); }
   std::vector<uint256> DebugCandidateHashes() const {
     std::vector<uint256> out;
@@ -100,7 +92,13 @@ public:
     }
     return out;
   }
-#endif
+
+private:
+  // Set of blocks that could be chain tips (sorted by descending chain work)
+  std::set<chain::CBlockIndex *, CBlockIndexWorkComparator> m_candidates;
+
+  // Best header we've seen (most chainwork, may not be on active chain)
+  chain::CBlockIndex *m_best_header{nullptr};
 };
 
 } // namespace validation

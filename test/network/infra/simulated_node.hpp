@@ -80,6 +80,9 @@ public:
         network_manager_->set_default_inbound_permissions(flags);
     }
 
+    // Test configuration: Override block relay INV chunk size (friend access to BlockRelayManager)
+    void SetBlockRelayChunkSize(size_t chunk_size);
+
     // Statistics
     struct NodeStats {
         size_t blocks_mined = 0;

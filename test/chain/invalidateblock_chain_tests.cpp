@@ -1,34 +1,31 @@
 // Chain-level invalidateblock tests (ported to test2)
 
 #include <catch_amalgamated.hpp>
-#include "chain/chainstate_manager.hpp"
+#include "test_chainstate_manager.hpp"
 #include "chain/validation.hpp"
 #include "chain/chainparams.hpp"
 #include "chain/block.hpp"
-#include "chain/pow.hpp"
-#include "chain/randomx_pow.hpp"
 #include "util/time.hpp"
 
 using namespace unicity;
 using namespace unicity::validation;
 using namespace unicity::chain;
+using namespace unicity::test;
 
 class InvalidateBlockChainFixture2 {
 public:
-    InvalidateBlockChainFixture2() : params(ChainParams::CreateRegTest()) {
-        crypto::InitRandomX();
+    InvalidateBlockChainFixture2() : params(ChainParams::CreateRegTest()), chainstate(*params) {
         CBlockHeader genesis = params->GenesisBlock();
         chainstate.Initialize(genesis);
         genesis_hash = genesis.GetHash();
     }
     uint256 MineBlock() {
         auto* tip = chainstate.GetTip(); REQUIRE(tip != nullptr);
-        CBlockHeader header; header.nVersion=1; header.hashPrevBlock=tip->GetBlockHash(); header.minerAddress=uint160(); header.nTime=tip->nTime+120; header.nBits=consensus::GetNextWorkRequired(tip, *params); header.nNonce=0;
-        uint256 rx; while(!consensus::CheckProofOfWork(header, header.nBits, *params, crypto::POWVerifyMode::MINING, &rx)) { header.nNonce++; if(header.nNonce==0) header.nTime++; }
-        header.hashRandomX=rx; ValidationState st; REQUIRE(chainstate.ProcessNewBlockHeader(header, st, /*min_pow_checked=*/true)); return header.GetHash();
+        CBlockHeader header; header.nVersion=1; header.hashPrevBlock=tip->GetBlockHash(); header.minerAddress=uint160(); header.nTime=tip->nTime+120; header.nBits=0x207fffff; header.nNonce=tip->nHeight+1;
+        header.hashRandomX.SetNull(); ValidationState st; REQUIRE(chainstate.ProcessNewBlockHeader(header, st, /*min_pow_checked=*/true)); return header.GetHash();
     }
     const CBlockIndex* Get(const uint256& h){ return chainstate.LookupBlockIndex(h); }
-    std::unique_ptr<ChainParams> params; ChainstateManager chainstate{*params}; uint256 genesis_hash;
+    std::unique_ptr<ChainParams> params; TestChainstateManager chainstate; uint256 genesis_hash;
 };
 
 TEST_CASE("InvalidateBlock (chain) - Basic invalidation", "[invalidateblock][chain]") {

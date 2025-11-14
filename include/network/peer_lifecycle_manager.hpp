@@ -181,10 +181,9 @@ public:
   // Process periodic tasks (cleanup, connection maintenance)
   void process_periodic();
 
-#ifdef UNICITY_TESTS
   // Test-only: set a peer's creation time (used to simulate feeler aging)
+  // This method is intentionally public but should only be used in tests
   void TestOnlySetPeerCreatedAt(int peer_id, std::chrono::steady_clock::time_point tp);
-#endif
 
   // === Misbehavior Tracking (delegated to MisbehaviorManager) ===
   // Public API for reporting protocol violations

@@ -180,30 +180,35 @@ public:
   // Self-connection prevention
   uint64_t get_local_nonce() const { return local_nonce_; }
 
-#ifdef UNICITY_TESTS
   // Test-only hook: trigger initial sync selection (normally run via timers)
+  // This method is intentionally public but should only be used in tests
   void test_hook_check_initial_sync();
 
   // Test-only hook: trigger headers sync timeout processing (stall detection)
+  // This method is intentionally public but should only be used in tests
   void test_hook_header_sync_process_timers();
 
   // Test-only: Set default permissions for inbound connections
+  // This method is intentionally public but should only be used in tests
   void set_default_inbound_permissions(NetPermissionFlags flags) {
     default_inbound_permissions_ = flags;
   }
 
   // Test-only: Manually trigger a feeler connection attempt
+  // This method is intentionally public but should only be used in tests
   void attempt_feeler_connection();
 
   // Test-only: Access dispatcher for diagnostics
+  // This method is intentionally public but should only be used in tests
   MessageDispatcher& dispatcher_for_test() { return *message_dispatcher_; }
 
   // Test-only: Access discovery manager for diagnostics
+  // This method is intentionally public but should only be used in tests
   PeerDiscoveryManager& discovery_manager_for_test() { return *discovery_manager_; }
 
   // Test-only: Access sync manager for diagnostics
+  // This method is intentionally public but should only be used in tests
   BlockchainSyncManager& sync_manager_for_test() { return *sync_manager_; }
-#endif
 
   // Stats (used primarily in tests, but useful for monitoring/debugging)
   size_t active_peer_count() const;

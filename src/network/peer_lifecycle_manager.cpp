@@ -525,13 +525,12 @@ void PeerLifecycleManager::disconnect_all() {
   stopping_all_.store(false, std::memory_order_release);
 }
 
-#ifdef UNICITY_TESTS
+// Test-only method (intentionally available in all builds for testing)
 void PeerLifecycleManager::TestOnlySetPeerCreatedAt(int peer_id, std::chrono::steady_clock::time_point tp) {
   peer_states_.Modify(peer_id, [&](PeerTrackingData& state) {
     state.created_at = tp;
   });
 }
-#endif
 
 void PeerLifecycleManager::process_periodic() {
   std::vector<int> to_remove;

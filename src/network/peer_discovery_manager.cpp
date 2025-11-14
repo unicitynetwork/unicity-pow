@@ -433,7 +433,7 @@ bool PeerDiscoveryManager::HandleGetAddr(PeerPtr peer) {
   return true;
 }
 
-#ifdef UNICITY_TESTS
+// Test/diagnostic methods (accessible only via friend class NetworkManager)
 PeerDiscoveryManager::GetAddrDebugStats PeerDiscoveryManager::GetGetAddrDebugStats() const {
   GetAddrDebugStats s;
   s.total = stats_getaddr_total_.load(std::memory_order_relaxed);
@@ -451,7 +451,6 @@ PeerDiscoveryManager::GetAddrDebugStats PeerDiscoveryManager::GetGetAddrDebugSta
 void PeerDiscoveryManager::TestSeedRng(uint64_t seed) {
   rng_.seed(seed);
 }
-#endif
 
 // Helper to build binary key (uses shared AddressKey from peer_tracking.hpp)
 network::AddressKey PeerDiscoveryManager::MakeKey(const protocol::NetworkAddress& a) {

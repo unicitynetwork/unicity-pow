@@ -548,7 +548,7 @@ void NetworkManager::schedule_next_sendmessages() {
   });
 }
 
-#ifdef UNICITY_TESTS
+// Test/diagnostic methods (accessible only via friend class SimulatedNode)
 void NetworkManager::test_hook_check_initial_sync() {
   // Expose initial sync trigger for tests when io_threads==0
   check_initial_sync();
@@ -559,6 +559,18 @@ void NetworkManager::test_hook_header_sync_process_timers() {
   if (sync_manager_) {
     sync_manager_->header_sync().ProcessTimers();
   }
+}
+
+void NetworkManager::attempt_feeler_connection() {
+  // Test-only wrapper: Delegate to PeerLifecycleManager
+  peer_manager_->AttemptFeelerConnection(
+    [this]() { return running_.load(std::memory_order_acquire); },
+    [this]() { return transport_; },
+    [this](Peer* peer) { setup_peer_message_handler(peer); },
+    config_.network_magic,
+    chainstate_manager_.GetChainHeight(),
+    local_nonce_
+  );
 }
 
 void NetworkManager::schedule_next_feeler() {
@@ -601,19 +613,6 @@ void NetworkManager::schedule_next_feeler() {
     }
   });
 }
-
-void NetworkManager::attempt_feeler_connection() {
-  // Test-only wrapper: Delegate to PeerLifecycleManager
-  peer_manager_->AttemptFeelerConnection(
-    [this]() { return running_.load(std::memory_order_acquire); },
-    [this]() { return transport_; },
-    [this](Peer* peer) { setup_peer_message_handler(peer); },
-    config_.network_magic,
-    chainstate_manager_.GetChainHeight(),
-    local_nonce_
-  );
-}
-#endif
 
 void NetworkManager::check_initial_sync() {
   // Delegate to HeaderSyncManager

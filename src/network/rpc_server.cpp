@@ -397,13 +397,15 @@ RPCServer::HandleGetBlockchainInfo(const std::vector<std::string> &params) {
   }
 
   // Compute average inter-block times over recent windows
-  // Note: We cap the window at chain height to avoid including genesis timestamp
-  // which may be far in the past and skew the average
+  // Note: We cap the window at (chain height - 1) to avoid including the
+  // genesis→block1 transition, which may have an artificial timestamp and skew the average
   auto compute_avg = [](const chain::CBlockIndex *p, int window) -> double {
     if (!p || !p->pprev || window <= 0) return 0.0;
 
-    // Cap window at actual chain height (don't go past genesis)
-    int actual_window = std::min(window, p->nHeight);
+    // Cap window to avoid going back to genesis (stop at height 1)
+    // This ensures we only measure block N → block N-1 transitions where N >= 2
+    int actual_window = std::min(window, p->nHeight - 1);
+    if (actual_window <= 0) return 0.0;
 
     const chain::CBlockIndex *cur = p;
     long long sum = 0;

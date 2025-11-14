@@ -11,6 +11,8 @@
 #include "chain/randomx_pow.hpp"
 #include "util/sha256.hpp"
 #include "chain/validation.hpp"
+#include "network/blockchain_sync_manager.hpp"
+#include "network/block_relay_manager.hpp"
 
 namespace unicity {
 namespace test {
@@ -348,13 +350,22 @@ void SimulatedNode::ProcessEvents() {
     }
 }
 
+void SimulatedNode::SetBlockRelayChunkSize(size_t chunk_size) {
+    // Access BlockRelayManager through NetworkManager's sync_manager
+    // Uses friend class privilege to call private SetInvChunkSize()
+    if (network_manager_) {
+        auto& sync_mgr = network_manager_->sync_manager_for_test();
+        sync_mgr.block_relay().SetInvChunkSize(chunk_size);
+    }
+}
+
 void SimulatedNode::ProcessPeriodic() {
     // Run periodic maintenance tasks
     // In a real node, these run on timers, but in simulation they're triggered by AdvanceTime()
     if (network_manager_) {
         // Trigger initial sync selection deterministically (no timers)
         network_manager_->test_hook_check_initial_sync();
-        
+
         network_manager_->peer_manager().process_periodic();
         // Call announce_tip_to_peers() to add blocks to announcement queues
         // The actual flushing happens in ProcessEvents() (like Bitcoin's SendMessages loop)

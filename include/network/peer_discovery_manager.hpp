@@ -223,8 +223,8 @@ public:
    */
   std::vector<protocol::NetworkAddress> LoadAnchors(const std::string& filepath);
 
-#ifdef UNICITY_TESTS
   // === Test/Diagnostic Methods ===
+  // These methods are intentionally public but should only be used in tests
 
   // Debug stats snapshot for GETADDR handling (for tests/triage)
   struct GetAddrDebugStats {
@@ -246,7 +246,6 @@ public:
   // Test-only accessors for internal managers
   AddressManager& addr_manager_for_test() { return *addr_manager_; }
   AnchorManager& anchor_manager_for_test() { return *anchor_manager_; }
-#endif
 
 private:
   // Datadir for persistence

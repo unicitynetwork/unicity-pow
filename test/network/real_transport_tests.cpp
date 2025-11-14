@@ -148,25 +148,23 @@ client.stop();
 server.stop();
 }
 
-TEST_CASE("RealTransport listen retry after failure then success with ephemeral", "[network][transport][real][listen]") {
+TEST_CASE("RealTransport can listen on ephemeral port after privileged port fails", "[network][transport][real][listen]") {
     RealTransport t(1);
-
-    bool first_failed = false;
     auto noop_accept = [](TransportConnectionPtr){};
 
-    // Try privileged port to induce failure on most systems
-    if (!t.listen(1, noop_accept)) {
-        first_failed = true;
-    } else {
-        // Unexpected success; clean up and skip retry semantics
-        WARN("listen(1) unexpectedly succeeded; skipping retry test");
+    // Try privileged port (expected to fail on most systems without root)
+    bool privileged_failed = !t.listen(1, noop_accept);
+
+    if (!privileged_failed) {
+        // System allows binding to port 1; clean up and skip privilege test
+        WARN("Binding to port 1 succeeded (running as root?); skipping privilege test");
         t.stop_listening();
         t.stop();
         return;
     }
 
-    REQUIRE(first_failed);
-    // Now retry with ephemeral
+    // Verify we can still listen on ephemeral port after privileged port failure
+    // This tests that RealTransport state is correctly reset after listen() fails
     if (!t.listen(0, noop_accept)) {
         WARN("Unable to listen on ephemeral port; environment may restrict binds");
         t.stop();

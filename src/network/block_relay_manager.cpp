@@ -17,7 +17,8 @@ BlockRelayManager::BlockRelayManager(validation::ChainstateManager& chainstate,
                                      HeaderSyncManager* header_sync)
     : chainstate_manager_(chainstate),
       peer_manager_(peer_mgr),
-      header_sync_manager_(header_sync) {}
+      header_sync_manager_(header_sync),
+      inv_chunk_size_(protocol::MAX_INV_SIZE) {}
 
 void BlockRelayManager::AnnounceTipToAllPeers() {
   // Periodic re-announcement to all connected peers
@@ -118,9 +119,9 @@ void BlockRelayManager::FlushBlockAnnouncements() {
     }
 
     // Create and send INV message(s) with pending blocks
-    // Chunked to protocol::MAX_INV_SIZE to respect wire limits and avoid overlarge messages.
+    // Chunked to inv_chunk_size_ to respect wire limits and avoid overlarge messages.
     const size_t total = blocks_to_announce.size();
-    const size_t chunk = protocol::MAX_INV_SIZE;
+    const size_t chunk = inv_chunk_size_;
     size_t sent_items = 0;
     size_t chunk_idx = 0;
     while (sent_items < total) {
