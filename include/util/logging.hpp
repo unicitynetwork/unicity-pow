@@ -32,7 +32,7 @@ public:
    * Thread-safe: Uses std::call_once internally. Multiple calls are safe;
    * only the first call performs initialization.
    */
-  static void Initialize(const std::string &log_level = "info",
+  static void Initialize(const std::string &log_level = "off",
                          bool log_to_file = false,
                          const std::string &log_file_path = "debug.log");
 

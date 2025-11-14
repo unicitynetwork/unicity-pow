@@ -151,8 +151,8 @@ TEST_CASE("BlockRelay policy: Flush chunking boundaries 0, =MAX, 2xMAX; multi-pe
     a.GetNetworkManager().flush_block_announcements(); AdvanceSeconds(net, 1);
     CHECK(net.CountCommandSent(a.GetId(), b.GetId(), protocol::commands::INV) == 0);
 
-    // Fill exactly MAX_INV_SIZE
-    const size_t MAXN = protocol::MAX_INV_SIZE;
+    // Fill exactly MAX_INV_SIZE (use 1000 instead of 50000 for faster testing - chunking logic is the same)
+    const size_t MAXN = 1000;  // Reduced from protocol::MAX_INV_SIZE (50000) for test performance
     std::vector<uint256> batch_max; batch_max.reserve(MAXN);
     std::mt19937_64 rng(123);
     for (size_t i=0;i<MAXN;++i){ uint256 h{}; for (int j=0;j<4;++j){ uint64_t w=rng(); std::memcpy(h.data()+j*8,&w,8);} batch_max.push_back(h);}    

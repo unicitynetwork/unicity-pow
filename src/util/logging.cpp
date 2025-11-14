@@ -79,15 +79,18 @@ static void InitializeInternal(const std::string &log_level, bool log_to_file,
     // Set default logger
     spdlog::set_default_logger(s_loggers["default"]);
 
-    // Add visual separator for new session
-    if (log_to_file) {
+    // Add visual separator for new session (only if logging is enabled)
+    if (log_to_file && log_level != "off") {
       for (int i = 0; i < 10; ++i) {
         spdlog::default_logger()->info("");
       }
     }
 
     // Direct logger access (cannot use LOG_INFO macro - would deadlock on mutex)
-    s_loggers["default"]->info("Logging system initialized (level: {})", log_level);
+    // Only log initialization message if logging is actually enabled
+    if (log_level != "off") {
+      s_loggers["default"]->info("Logging system initialized (level: {})", log_level);
+    }
   } catch (const spdlog::spdlog_ex &ex) {
     std::cerr << "Log initialization failed: " << ex.what() << std::endl;
     // Exception safety: if init fails, s_loggers remains empty
@@ -134,7 +137,7 @@ std::shared_ptr<spdlog::logger> LogManager::GetLogger(const std::string &name) {
       auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
       console_sink->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] %v");
       auto logger = std::make_shared<spdlog::logger>("default", console_sink);
-      logger->set_level(spdlog::level::info);
+      logger->set_level(spdlog::level::off);  // Default to off for tests
       logger->flush_on(spdlog::level::trace);
       spdlog::register_logger(logger);
       s_loggers["default"] = logger;
@@ -165,7 +168,8 @@ void LogManager::SetLogLevel(const std::string &level) {
   // Note: This LOG_INFO call will deadlock if it tries to GetLogger()
   // because we're holding s_loggers_mutex. But since we're already initialized,
   // the logger exists and we can use it directly without GetLogger().
-  if (s_loggers.count("default") > 0) {
+  // Only log if changing to non-off level (avoid spam during tests)
+  if (s_loggers.count("default") > 0 && level != "off") {
     s_loggers["default"]->info("Log level changed to: {}", level);
   }
 }
@@ -185,12 +189,14 @@ void LogManager::SetComponentLevel(const std::string &component, const std::stri
     it->second->set_level(log_level);
 
     // Direct logger access (avoid deadlock from GetLogger() calling Initialize())
-    if (s_loggers.count("default") > 0) {
+    // Only log if changing to non-off level (avoid spam during tests)
+    if (s_loggers.count("default") > 0 && level != "off") {
       s_loggers["default"]->info("Component '{}' log level set to: {}", component, level);
     }
   } else {
     // Direct logger access (avoid deadlock)
-    if (s_loggers.count("default") > 0) {
+    // Only warn if logging is actually enabled
+    if (s_loggers.count("default") > 0 && s_loggers["default"]->level() != spdlog::level::off) {
       s_loggers["default"]->warn("Unknown log component: {}", component);
     }
   }

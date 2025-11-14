@@ -40,13 +40,13 @@ bool NetworkBridgedTransport::BridgedConnection::send(const std::vector<uint8_t>
         cmd = hdr.get_command();
     }
     if (!open_) {
-        LOG_NET_INFO("bridge: send DROP (closed) node={} -> peer_node={} cmd={} size={}",
-                     transport_ ? transport_->node_id_ : -1, peer_node_id_, cmd, data.size());
+        LOG_NET_TRACE("bridge: send DROP (closed) node={} -> peer_node={} cmd={} size={}",
+                      transport_ ? transport_->node_id_ : -1, peer_node_id_, cmd, data.size());
         return false;
     }
 
-    LOG_NET_INFO("bridge: send node={} -> peer_node={} cmd={} size={}",
-                 transport_ ? transport_->node_id_ : -1, peer_node_id_, cmd, data.size());
+    LOG_NET_TRACE("bridge: send node={} -> peer_node={} cmd={} size={}",
+                  transport_ ? transport_->node_id_ : -1, peer_node_id_, cmd, data.size());
 
     // Route through SimulatedNetwork
     if (transport_ && transport_->sim_network_) {
@@ -100,8 +100,8 @@ void NetworkBridgedTransport::BridgedConnection::deliver_data(
     // Log command being delivered to local peer
     protocol::MessageHeader hdr;
     if (data.size() >= protocol::MESSAGE_HEADER_SIZE && message::deserialize_header(data.data(), data.size(), hdr)) {
-        LOG_NET_INFO("bridge: deliver_data to node={} from peer_node={} cmd={}",
-                     transport_ ? transport_->node_id_ : -1, peer_node_id_, hdr.get_command());
+        LOG_NET_TRACE("bridge: deliver_data to node={} from peer_node={} cmd={}",
+                      transport_ ? transport_->node_id_ : -1, peer_node_id_, hdr.get_command());
     }
     if (open_ && receive_callback_) {
         receive_callback_(data);
@@ -233,7 +233,7 @@ void NetworkBridgedTransport::deliver_message(
     if (data.size() >= protocol::MESSAGE_HEADER_SIZE && message::deserialize_header(data.data(), data.size(), hdr)) {
         cmd = hdr.get_command();
     }
-    LOG_NET_INFO("bridge: deliver_message from={} to={} cmd={} size={}", from_node_id, node_id_, cmd, data.size());
+    LOG_NET_TRACE("bridge: deliver_message from={} to={} cmd={} size={}", from_node_id, node_id_, cmd, data.size());
 
     // Find connection for this peer
     uint64_t conn_id = 0;

@@ -45,7 +45,7 @@ void SimulatedNetwork::SendMessage(int from_node, int to_node, const std::vector
     if (data.size() >= protocol::MESSAGE_HEADER_SIZE && message::deserialize_header(data.data(), data.size(), hdr)) {
         cmd = hdr.get_command();
     }
-    LOG_NET_INFO("simnet: enqueue from={} to={} cmd={} size={}", from_node, to_node, cmd, data.size());
+    LOG_NET_TRACE("simnet: enqueue from={} to={} cmd={} size={}", from_node, to_node, cmd, data.size());
 
     // Track command type for testing if enabled
     if (track_commands_ && data.size() >= protocol::MESSAGE_HEADER_SIZE) {

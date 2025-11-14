@@ -21,8 +21,8 @@ public:
     }
 
     ~AdversarialTestFixture() {
-        // Restore default log level after test
-        spdlog::set_level(spdlog::level::info);
+        // Restore default log level after test (off for tests)
+        spdlog::set_level(spdlog::level::off);
     }
 
     std::unique_ptr<PeerLifecycleManager> CreatePeerLifecycleManager() {
