@@ -4775,10 +4775,10 @@ int main (int argc, char * argv[]) {
     (void)&Catch::leakDetector;
 
     // Initialize logging system for tests
-    // Check environment variable UNICITY_TEST_LOG_LEVEL (default: "info")
-    // Set UNICITY_TEST_LOG_LEVEL=trace to enable TRACE logging
+    // Check environment variable UNICITY_TEST_LOG_LEVEL (default: "off")
+    // Set UNICITY_TEST_LOG_LEVEL=info or trace to enable logging
     const char* log_level_env = std::getenv("UNICITY_TEST_LOG_LEVEL");
-    std::string log_level = log_level_env ? log_level_env : "info";
+    std::string log_level = log_level_env ? log_level_env : "off";
 
     // Initialize without file logging (console only for tests)
     extern void InitializeTestLogging(const std::string& level);
