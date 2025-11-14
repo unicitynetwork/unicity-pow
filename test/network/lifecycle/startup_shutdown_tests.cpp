@@ -63,8 +63,6 @@ private:
 // ===========================================================================
 
 TEST_CASE("RealTransport - Thread joining on stop", "[network][lifecycle][transport]") {
-    util::LogManager::Initialize("error", false);
-
     RealTransport transport(1);  // 1 IO thread
     transport.run();
 
@@ -75,8 +73,6 @@ TEST_CASE("RealTransport - Thread joining on stop", "[network][lifecycle][transp
 }
 
 TEST_CASE("RealTransport - Multiple stop() calls are safe", "[network][lifecycle][transport]") {
-    util::LogManager::Initialize("error", false);
-
     RealTransport transport(1);
     transport.run();
 
@@ -93,7 +89,6 @@ TEST_CASE("RealTransport - Multiple stop() calls are safe", "[network][lifecycle
 // ===========================================================================
 
 TEST_CASE("NetworkManager - External io_context lifecycle", "[network][lifecycle][external]") {
-    util::LogManager::Initialize("error", false);
     MinimalChainstate chainstate;
 
     auto io = std::make_shared<boost::asio::io_context>();
@@ -118,7 +113,6 @@ TEST_CASE("NetworkManager - External io_context lifecycle", "[network][lifecycle
 }
 
 TEST_CASE("NetworkManager - Concurrent stop() calls", "[network][lifecycle][concurrent]") {
-    util::LogManager::Initialize("error", false);
     MinimalChainstate chainstate;
 
     auto io = std::make_shared<boost::asio::io_context>();
@@ -146,7 +140,6 @@ TEST_CASE("NetworkManager - Concurrent stop() calls", "[network][lifecycle][conc
 }
 
 TEST_CASE("NetworkManager - Rapid start/stop cycles", "[network][lifecycle][stress]") {
-    util::LogManager::Initialize("error", false);
     MinimalChainstate chainstate;
 
     auto io = std::make_shared<boost::asio::io_context>();
